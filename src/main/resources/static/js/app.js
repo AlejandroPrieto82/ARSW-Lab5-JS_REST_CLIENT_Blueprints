@@ -1,7 +1,6 @@
 var app = (function () {
 
-    // Cambia entre apimock y apiclient aquí
-    var api = apiclient; // o apimock
+    var api = apiclient; // apiclient cambiar a apimock si quieres usar mock local
 
     var selectedAuthor = "";
     var blueprintsList = [];
@@ -68,7 +67,7 @@ var app = (function () {
 
             var ctx = canvas.getContext("2d");
 
-            // Ajuste de escala automático
+            // Escalar automáticamente según el tamaño del canvas
             var maxX = Math.max(...bp.points.map(p => p.x));
             var maxY = Math.max(...bp.points.map(p => p.y));
             var scaleX = canvas.width / (maxX + 10);
@@ -95,14 +94,20 @@ var app = (function () {
                 clearCanvas();
                 $("#blueprintsTable").empty();
                 $("#totalPoints").text(0);
+                $("#selectedAuthor").text("Ninguno");
             }
+        });
+
+        // BOTÓN BORRAR SOLO EL CANVAS
+        $("#clearCanvasBtn").click(function () {
+            clearCanvas();
         });
     });
 
     return {
         setAuthor: setAuthor,
         updateBlueprints: updateBlueprints,
-        drawBlueprint: drawBlueprint
+        drawBlueprint: drawBlueprint,
+        clearCanvas: clearCanvas
     };
-
 })();
