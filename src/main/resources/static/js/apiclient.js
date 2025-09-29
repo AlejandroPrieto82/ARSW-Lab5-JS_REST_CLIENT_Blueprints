@@ -5,10 +5,12 @@ var apiclient = (function () {
         $.ajax({
             url: "/blueprints/" + author,
             method: "GET",
+            dataType: "json",
             success: function(data) {
                 callback(data || []);
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error("Error getBlueprintsByAuthor:", status, error);
                 callback([]);
             }
         });
@@ -19,10 +21,12 @@ var apiclient = (function () {
         $.ajax({
             url: "/blueprints/" + author + "/" + name,
             method: "GET",
+            dataType: "json",
             success: function(data) {
                 callback(data || null);
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error("Error getBlueprintsByNameAndAuthor:", status, error);
                 callback(null);
             }
         });
@@ -32,4 +36,5 @@ var apiclient = (function () {
         getBlueprintsByAuthor: getBlueprintsByAuthor,
         getBlueprintsByNameAndAuthor: getBlueprintsByNameAndAuthor
     };
+
 })();
