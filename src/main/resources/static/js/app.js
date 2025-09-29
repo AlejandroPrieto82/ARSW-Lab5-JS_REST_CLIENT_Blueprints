@@ -9,18 +9,29 @@ var app = (function () {
         $("#selectedAuthor").text(author);
     }
 
+    // Limpiar canvas
+    function clearCanvas() {
+        var canvas = document.getElementById("blueprintCanvas");
+        if (canvas) {
+            var ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        $("#drawingName").text("");
+    }
+
     // Actualizar listado de planos desde la API REST
     function updateBlueprints(author) {
         setAuthor(author);
 
-        // Limpiar tabla
+        // Limpiar tabla y canvas
         $("#blueprintsTable").empty();
+        clearCanvas();
 
         // ------------------------------
         // OPCIÓN 1: API REST real
         // ------------------------------
         $.ajax({
-            url: "/blueprints/" + author, // Endpoint REST
+            url: "/blueprints/" + author,
             method: "GET",
             success: function(data) {
                 if (!data || data.length === 0) {
@@ -36,7 +47,8 @@ var app = (function () {
                 // Llenar tabla HTML con los planos
                 blueprintsList.forEach(function(bp) {
                     $("#blueprintsTable").append(
-                        "<tr><td>" + bp.name + "</td><td>" + bp.pointsCount + "</td></tr>"
+                        "<tr><td>" + bp.name + "</td><td>" + bp.pointsCount + "</td>" +
+                        "<td><button class='btn btn-sm btn-success drawBtn' data-plan='" + bp.name + "'>Dibujar</button></td></tr>"
                     );
                 });
 
@@ -46,6 +58,12 @@ var app = (function () {
                 }, 0);
 
                 $("#totalPoints").text(totalOriginal);
+
+                // Asociar evento a botones de dibujo
+                $(".drawBtn").click(function() {
+                    var planName = $(this).data("plan");
+                    drawBlueprint(author, planName);
+                });
             },
             error: function() {
                 alert("Error: autor no encontrado o fallo en el servidor.");
@@ -69,7 +87,8 @@ var app = (function () {
 
             blueprintsList.forEach(function(bp) {
                 $("#blueprintsTable").append(
-                    "<tr><td>" + bp.name + "</td><td>" + bp.pointsCount + "</td></tr>"
+                    "<tr><td>" + bp.name + "</td><td>" + bp.pointsCount + "</td>" +
+                    "<td><button class='btn btn-sm btn-success drawBtn' data-plan='" + bp.name + "'>Dibujar</button></td></tr>"
                 );
             });
 
@@ -78,6 +97,80 @@ var app = (function () {
             }, 0);
 
             $("#totalPoints").text(totalOriginal);
+
+            $(".drawBtn").click(function() {
+                var planName = $(this).data("plan");
+                drawBlueprint(author, planName);
+            });
+        });
+        */
+    }
+
+    // Dibujar plano en canvas
+    function drawBlueprint(author, planName) {
+    // clearCanvas(); // <-- quitar para que se acumulen trazos
+
+    // OPCIÓN 1: API REST real
+    $.ajax({
+        url: "/blueprints/" + author + "/" + planName,
+        method: "GET",
+        success: function(bp) {
+            if (!bp || !bp.points || bp.points.length === 0) {
+                alert("Plano no encontrado o vacío");
+                return;
+            }
+
+            $("#drawingName").text(planName);
+
+            var canvas = document.getElementById("blueprintCanvas");
+            if (!canvas) return;
+
+            var ctx = canvas.getContext("2d");
+
+            // Determinar escala para que los puntos se vean mejor
+            var scaleX = canvas.width / 10; // ajusta según tamaño de los planos
+            var scaleY = canvas.height / 10;
+
+
+            ctx.beginPath();
+            ctx.moveTo(bp.points[0].x * scaleX, bp.points[0].y * scaleY);
+
+            for (var i = 1; i < bp.points.length; i++) {
+                ctx.lineTo(bp.points[i].x * scaleX, bp.points[i].y * scaleY);
+            }
+
+            ctx.stroke();
+        },
+        error: function() {
+            alert("Error al dibujar el plano");
+        }
+    });
+
+
+        // ------------------------------
+        // OPCIÓN 2: Para pruebas locales con apimock.js
+        // ------------------------------
+        /*
+        apimock.getBlueprintsByNameAndAuthor(author, planName, function(bp) {
+            if (!bp || !bp.points || bp.points.length === 0) {
+                alert("Plano no encontrado o vacío");
+                return;
+            }
+
+            $("#drawingName").text(planName);
+
+            var canvas = document.getElementById("blueprintCanvas");
+            if (!canvas) return;
+
+            var ctx = canvas.getContext("2d");
+            ctx.beginPath();
+            ctx.moveTo(bp.points[0].x, bp.points[0].y);
+
+            for (var i = 1; i < bp.points.length; i++) {
+                ctx.lineTo(bp.points[i].x, bp.points[i].y);
+            }
+
+            ctx.stroke();
         });
         */
     }
@@ -90,6 +183,9 @@ var app = (function () {
                 updateBlueprints(author);
             } else {
                 alert("Ingrese un autor válido");
+                clearCanvas();
+                $("#blueprintsTable").empty();
+                $("#totalPoints").text(0);
             }
         });
     });
@@ -97,6 +193,7 @@ var app = (function () {
     // Público
     return {
         setAuthor: setAuthor,
-        updateBlueprints: updateBlueprints
+        updateBlueprints: updateBlueprints,
+        drawBlueprint: drawBlueprint
     };
 })();
